@@ -4,8 +4,16 @@ Install-WindowsFeature -name Web-Server -IncludeManagementTools
 # Install ASP.NET 4.6
 Install-WindowsFeature Web-Asp-Net45
 
-# Install Web Management Service
+# Delete contents of wwwroot
+Remove-Item -Recurse C:\inetpub\wwwroot\*
+
+# Install Web Management Service (enable and start service)
 Install-WindowsFeature -Name Web-Mgmt-Service
+Set-ItemProperty -Path  HKLM:\SOFTWARE\Microsoft\WebManagement\Server -Name EnableRemoteManagement -Value 1
+Set-Service -name WMSVC -StartupType Automatic
+if ((Get-Service WMSVC).Status -ne "Running") {
+    net start wmsvc
+}
 
 # Install Web Deploy 3.6
 # Download file from Microsoft Downloads and save to local temp file (%LocalAppData%/Temp/2)
@@ -17,6 +25,16 @@ $logFile = [System.IO.Path]::GetTempFileName()
 $arguments= '/i ' + $msiFile + ' ADDLOCAL=ALL /qn /norestart LicenseAccepted="0" /lv ' + $logFile
 # Sample = msiexec /i C:\Users\{user}\AppData\Local\Temp\2\tmp9267.msi ADDLOCAL=ALL /qn /norestart LicenseAccepted="0" /lv $logFile
 # Execute the MSI and wait for it to complete
+$proc = (Start-Process -file msiexec -arg $arguments -Passthru)
+$proc | Wait-Process
+Get-Content $logFile
+
+# Install VC Runtime 2017
+# https://aka.ms/vs/15/release/vc_redist.x64.exe
+$msiFile = [System.IO.Path]::GetTempFileName() | Rename-Item -NewName { $_ -replace 'tmp$', 'msi' } -PassThru
+Invoke-WebRequest -Uri https://aka.ms/vs/15/release/vc_redist.x64.exe -OutFile $msiFile
+$logFile = [System.IO.Path]::GetTempFileName()
+$arguments= '/i ' + $msiFile + ' ADDLOCAL=ALL /qn /norestart LicenseAccepted="0" /lv ' + $logFile
 $proc = (Start-Process -file msiexec -arg $arguments -Passthru)
 $proc | Wait-Process
 Get-Content $logFile

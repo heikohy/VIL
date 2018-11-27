@@ -38,3 +38,8 @@ $arguments= '/i ' + $msiFile + ' ADDLOCAL=ALL /qn /norestart LicenseAccepted="0"
 $proc = (Start-Process -file msiexec -arg $arguments -Passthru)
 $proc | Wait-Process
 Get-Content $logFile
+
+# Install .Net Framework 7.2 Runtime
+$setupFile = [System.IO.Path]::GetTempFileName() | Rename-Item -NewName { $_ -replace 'tmp$', 'exe' } -PassThru
+Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/?LinkId=863262 -OutFile $setupFile
+Start-Process -file $setupFile -ArgumentList '/q'

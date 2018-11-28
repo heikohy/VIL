@@ -30,14 +30,9 @@ $proc | Wait-Process
 Get-Content $logFile
 
 # Install VC Runtime 2017
-# https://aka.ms/vs/15/release/vc_redist.x64.exe
-$msiFile = [System.IO.Path]::GetTempFileName() | Rename-Item -NewName { $_ -replace 'tmp$', 'msi' } -PassThru
-Invoke-WebRequest -Uri https://aka.ms/vs/15/release/vc_redist.x64.exe -OutFile $msiFile
-$logFile = [System.IO.Path]::GetTempFileName()
-$arguments= '/i ' + $msiFile + ' ADDLOCAL=ALL /qn /norestart LicenseAccepted="0" /lv ' + $logFile
-$proc = (Start-Process -file msiexec -arg $arguments -Passthru)
-$proc | Wait-Process
-Get-Content $logFile
+$setupFile = [System.IO.Path]::GetTempFileName() | Rename-Item -NewName { $_ -replace 'tmp$', 'exe' } -PassThru
+Invoke-WebRequest -Uri https://aka.ms/vs/15/release/vc_redist.x64.exe -OutFile $setupFile
+Start-Process -file $setupFile -arg '/install /passive /norestart'
 
 # Install .Net Framework 7.2 Runtime
 $setupFile = [System.IO.Path]::GetTempFileName() | Rename-Item -NewName { $_ -replace 'tmp$', 'exe' } -PassThru

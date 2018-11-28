@@ -20,7 +20,6 @@
     "networkSecurityGroupName": "[concat(parameters('virtualMachineName'), '-nsg')]",
     "diagnosticsStorageAccountName": "[concat(variables('safeVmName'), 'diag')]",
     "diagnosticsStorageAccountType": "Standard_LRS",
-    "diagnosticsStorageAccountId": "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
     "addressPrefix": "10.0.5.0/24",
     "subnetName": "default",
     "subnetPrefix": "10.0.5.0/24",
@@ -39,7 +38,7 @@
     {
       "name": "[parameters('virtualMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2016-04-30-preview",
+      "apiVersion": "2018-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
@@ -65,7 +64,10 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "fromImage",
+            "osType": "Windows",
+            "name": "[concat(parameters('virtualMachineName'),'_OsDisk_',take(guid(resourceGroup().id), 8))]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             }
@@ -90,7 +92,7 @@
         {
           "type": "extensions",
           "name": "CustomScriptExtension",
-          "apiVersion": "2015-06-15",
+          "apiVersion": "2018-06-01",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
@@ -102,7 +104,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "https://raw.githubusercontent.com/justcla/ASPNet-VM/master/setup.ps1"
+                "https://raw.githubusercontent.com/heikohy/VIL/master/Setup.ps1"
               ],
               "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File setup.ps1"
             }
@@ -113,7 +115,7 @@
     {
       "name": "[concat('shutdown-computevm-', parameters('virtualMachineName'))]",
       "type": "Microsoft.DevTestLab/schedules",
-      "apiVersion": "2017-04-26-preview",
+      "apiVersion": "2016-05-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "status": "[variables('autoShutdownStatus')]",
@@ -195,7 +197,7 @@
     {
       "name": "[variables('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2018-08-01",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
@@ -219,7 +221,7 @@
             "name": "default-allow-rdp",
             "properties": {
               "priority": 1000,
-              "protocol": "TCP",
+              "protocol": "Tcp",
               "access": "Allow",
               "direction": "Inbound",
               "sourceAddressPrefix": "*",
